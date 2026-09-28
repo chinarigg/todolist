@@ -89,6 +89,17 @@ body.locked .wrap{display:none}
 .add input{flex:1;min-width:0;border:1px dashed var(--accent-2);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 10px;font:400 .9rem var(--font-body)}
 .add button{border:0;background:var(--accent);color:var(--on-accent);border-radius:10px;width:36px;font-size:1.1rem;cursor:pointer}
 .col:nth-child(5){background:color-mix(in srgb,var(--accent-2) 22%,var(--card))}
+/* ===== Arrastar ===== */
+.grip{flex:none;color:var(--muted);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;padding:2px 6px;letter-spacing:2px;font-size:.9rem;opacity:.5}
+.row:hover .grip,.card:hover .grip{opacity:1}
+@media (hover:none){.grip{opacity:.8}}
+.cbody{display:flex;align-items:flex-start;gap:2px}
+.cbody p{flex:1;margin:0 0 8px}
+.cbody .grip{padding:0 4px 0 0;margin-top:1px}
+.card{user-select:none;-webkit-user-select:none}
+.ph{border:2px dashed var(--accent);border-radius:12px;box-sizing:border-box;min-height:24px}
+.sbar{touch-action:none}
+
 /* ===== Notas adesivas ===== */
 .stk{max-width:900px;margin:32px auto 0}
 .stk-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
@@ -186,13 +197,14 @@ function rowHTML(t){
   return `<div class="row ${t.d?'done':''}" data-id="${t.id}">
     <input type="checkbox" class="chk" ${t.d?'checked':''} aria-label="Concluir">
     <input class="txt" value="${esc(t.t)}" aria-label="Tarefa">
+    ${t.d?'':'<span class="grip" aria-label="Arrastar">⋮⋮</span>'}
     <button class="del" aria-label="Apagar">✕</button></div>`;
 }
 function renderTodos(){
   const open=S.todos.filter(t=>!t.d),done=S.todos.filter(t=>t.d);
   $('#count').textContent=open.length?`${open.length} pendente${open.length>1?'s':''}`:'';
   $('#list').innerHTML=open.map(rowHTML).join('')+
-    `<div class="row"><span class="chk" style="opacity:.35"></span>
+    `<div class="row newrow"><span class="chk" style="opacity:.35"></span>
      <input class="txt" id="new" placeholder="Nova tarefa" aria-label="Nova tarefa"></div>`+
     (done.length?`<div class="sep">Concluídas (${done.length})</div>`+done.map(rowHTML).join(''):'');
 }
@@ -223,8 +235,8 @@ function renderBoard(){
     const cs=S.cards.filter(c=>c.c===i);
     return `<div class="col" data-col="${i}">
       <h3>${name}<span>${cs.length}</span></h3>
-      ${cs.map(c=>`<div class="card" draggable="true" data-id="${c.id}">
-        <p>${esc(c.t)}</p>
+      ${cs.map(c=>`<div class="card" data-id="${c.id}">
+        <div class="cbody"><span class="grip" aria-label="Arrastar">⋮⋮</span><p>${esc(c.t)}</p></div>
         <div class="acts">
           <button data-mv="-1" ${i===0?'disabled':''} aria-label="Mover para trás">←</button>
           <button class="x" data-del aria-label="Apagar">✕</button>
@@ -250,16 +262,6 @@ board.addEventListener('click',e=>{
 board.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&e.target.matches('.add input'))addCard(e.target.closest('.col'),e.target);
 });
-let dragId=null;
-board.addEventListener('dragstart',e=>{const c=e.target.closest('.card');if(c){dragId=c.dataset.id;c.classList.add('dragging')}});
-board.addEventListener('dragend',()=>{dragId=null;renderBoard()});
-board.addEventListener('dragover',e=>{const c=e.target.closest('.col');if(c&&dragId){e.preventDefault();c.classList.add('over')}});
-board.addEventListener('dragleave',e=>{const c=e.target.closest('.col');if(c)c.classList.remove('over')});
-board.addEventListener('drop',e=>{
-  const c=e.target.closest('.col');if(!c||!dragId)return;
-  e.preventDefault();S.cards.find(x=>x.id===dragId).c=+c.dataset.col;save();renderBoard();
-});
-
 /* ---- Tema, backup ---- */
 $('#theme').onclick=()=>{
   const dark=document.documentElement.dataset.theme==='dark'||
@@ -318,24 +320,104 @@ ng.addEventListener('click',e=>{
   }
   save();renderNotes();
 });
-let nDrag=null;
-ng.addEventListener('mousedown',e=>{const b=e.target.closest('.sbar');if(b&&!e.target.closest('button'))b.closest('.sticky').draggable=true});
-ng.addEventListener('dragstart',e=>{const s=e.target.closest('.sticky');if(!s)return;nDrag=s.dataset.id;s.classList.add('dragging');e.dataTransfer.effectAllowed='move'});
-ng.addEventListener('dragend',()=>{nDrag=null;renderNotes()});
-ng.addEventListener('dragover',e=>{const s=e.target.closest('.sticky');if(s&&nDrag){e.preventDefault();s.classList.add('over')}});
-ng.addEventListener('dragleave',e=>{const s=e.target.closest('.sticky');if(s)s.classList.remove('over')});
-ng.addEventListener('drop',e=>{
-  const s=e.target.closest('.sticky');if(!s||!nDrag||s.dataset.id===nDrag)return;
-  e.preventDefault();
-  const from=S.notes.findIndex(x=>x.id===nDrag),n=S.notes.splice(from,1)[0];
-  S.notes.splice(S.notes.findIndex(x=>x.id===s.dataset.id),0,n);save();
-});
+/* ---- Reordenar arrastando (mouse e toque) ---- */
+function sortable(root,cfg){
+  root.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    const item=e.target.closest(cfg.item);
+    if(!item||!root.contains(item)||e.target.closest('button,input,textarea,select,a'))return;
+    if(!e.target.closest(cfg.handle)&&!(cfg.anywhere&&e.pointerType==='mouse'))return;
+    begin(e,item,cfg);
+  });
+}
+function begin(e,item,cfg){
+  const sx=e.clientX,sy=e.clientY,pid=e.pointerId;
+  let on=false,ph,offX,offY,lx=sx,ly=sy,timer,orig;
+  const place=()=>{
+    const under=document.elementFromPoint(lx,ly);
+    const zone=under&&under.closest(cfg.zone);
+    if(!zone)return;
+    const items=[...zone.querySelectorAll(cfg.item)].filter(n=>n!==item);
+    let ref=null;
+    for(const n of items){
+      const r=n.getBoundingClientRect();
+      const before=cfg.axis==='x'?(ly<r.top||(ly<=r.bottom&&lx<r.left+r.width/2)):(ly<r.top+r.height/2);
+      if(before){ref=n;break}
+    }
+    if(ref){if(ph.nextSibling!==ref)ref.before(ph)}
+    else if(items.length){const l=items[items.length-1];if(l.nextSibling!==ph)l.after(ph)}
+    else{const a=cfg.end&&zone.querySelector(cfg.end);a?a.before(ph):zone.appendChild(ph)}
+  };
+  const tick=()=>{
+    const m=70;
+    if(ly<m)scrollBy(0,-14);else if(ly>innerHeight-m)scrollBy(0,14);
+    const b=$('#board');
+    if(b&&!$('#tcg').hidden){
+      const r=b.getBoundingClientRect();
+      if(ly>r.top&&ly<r.bottom){if(lx<r.left+m)b.scrollLeft-=14;else if(lx>r.right-m)b.scrollLeft+=14}
+    }
+    place();
+  };
+  const move=ev=>{
+    if(ev.pointerId!==pid)return;
+    if(!on){
+      if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<5)return;
+      on=true;
+      const r=item.getBoundingClientRect();
+      offX=sx-r.left;offY=sy-r.top;
+      ph=document.createElement('div');ph.className='ph';ph.style.height=r.height+'px';
+      item.before(ph);
+      orig=item.getAttribute('style');
+      item.style.cssText=(orig||'')+`;position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;margin:0;z-index:1000;pointer-events:none;box-shadow:0 12px 28px rgba(0,0,0,.28);transform:rotate(1.5deg);`+(item.classList.contains('row')?'background:var(--card);padding:10px;border-radius:12px;':'');
+      document.body.style.userSelect='none';document.body.style.cursor='grabbing';
+      timer=setInterval(tick,50);
+    }
+    lx=ev.clientX;ly=ev.clientY;
+    item.style.left=(lx-offX)+'px';item.style.top=(ly-offY)+'px';
+    place();
+  };
+  const up=ev=>{
+    if(ev.pointerId!==pid)return;
+    document.removeEventListener('pointermove',move);
+    document.removeEventListener('pointerup',up);
+    document.removeEventListener('pointercancel',up);
+    clearInterval(timer);
+    document.body.style.userSelect='';document.body.style.cursor='';
+    if(!on)return;
+    if(ev.type==='pointerup'){
+      orig?item.setAttribute('style',orig):item.removeAttribute('style');
+      ph.replaceWith(item);
+      cfg.commit();
+    }
+    cfg.render();
+  };
+  document.addEventListener('pointermove',move);
+  document.addEventListener('pointerup',up);
+  document.addEventListener('pointercancel',up);
+}
+sortable($('#list'),{item:'.row[data-id]:not(.done)',handle:'.grip',zone:'#list',end:'.newrow',
+  commit(){
+    const m=Object.fromEntries(S.todos.map(t=>[t.id,t]));
+    const ids=[...document.querySelectorAll('#list .row[data-id]:not(.done)')].map(r=>r.dataset.id);
+    S.todos=[...ids.map(i=>m[i]),...S.todos.filter(t=>t.d)];save();
+  },render:renderTodos});
+sortable($('#board'),{item:'.card',handle:'.grip',anywhere:true,zone:'.col',end:'.add',
+  commit(){
+    const m=Object.fromEntries(S.cards.map(c=>[c.id,c])),out=[];
+    document.querySelectorAll('#board .col').forEach((col,i)=>col.querySelectorAll('.card').forEach(c=>{const o=m[c.dataset.id];o.c=i;out.push(o)}));
+    S.cards=out;save();
+  },render:renderBoard});
+sortable($('#notes'),{item:'.sticky',handle:'.sbar',anywhere:true,axis:'x',zone:'#notes',
+  commit(){
+    const m=Object.fromEntries(S.notes.map(n=>[n.id,n]));
+    S.notes=[...document.querySelectorAll('#notes .sticky')].map(n=>m[n.dataset.id]);save();
+  },render:renderNotes});
 
 renderTodos();renderBoard();renderNotes();
 
 /* ---- Senha ---- */
 /* Cole aqui o código gerado na tela “criar senha” */
-const PASS_HASH='1c024396d23c9c616d13defb00d5c09b7986e4f214d63d528cee7aacbdbb0bbe';
+const PASS_HASH='';
 const SALT='chinaritcg-painel-v1',UK=KEY+'-auth';
 async function derive(p){
   const enc=new TextEncoder();
