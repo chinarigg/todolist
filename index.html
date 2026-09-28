@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meu painel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ====== TEMA — troque aqui pelas cores ====== */
+:root{
+  --bg:#ffffff;
+  --card:#ffffff;
+  --ink:#111111;
+  --muted:#6b6b6b;
+  --line:#e6e6e6;
+  --accent:#ebc24b;    /* amarelo do site */
+  --accent-2:#f6e3a1;
+  --soft:#f6f4ee;
+  --on-accent:#111111;
+  --font-title:'Montserrat',system-ui,sans-serif;
+  --font-body:'Montserrat',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#151515;--card:#222;--ink:#f5f5f5;--muted:#a8a8a8;--line:#333;--soft:#2a2a2a}
+}
+:root[data-theme="dark"]{--bg:#151515;--card:#222;--ink:#f5f5f5;--muted:#a8a8a8;--line:#333;--soft:#2a2a2a}
+*{box-sizing:border-box}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--font-body);
+  padding:env(safe-area-inset-top,0) 16px env(safe-area-inset-bottom,0)}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 0 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+h1{font-family:var(--font-title);font-weight:800;font-size:1.7rem;margin:0;text-transform:lowercase}
+.tabs{display:flex;gap:6px;background:var(--soft);padding:5px;border-radius:999px}
+.tab{border:0;background:none;color:var(--muted);font:600 .95rem var(--font-body);padding:8px 18px;border-radius:999px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--on-accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent-2);outline-offset:2px}
+.tools{display:flex;gap:8px}
+.ghost{border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:10px;padding:7px 12px;font:600 .8rem var(--font-body);cursor:pointer}
+.ghost:hover{color:var(--ink)}
+[hidden]{display:none!important}
+
+/* ===== Tela de senha ===== */
+body.locked .wrap{display:none}
+#lock{min-height:100vh;display:grid;place-items:center;padding:24px 0}
+.lockbox{width:100%;max-width:380px;text-align:left}
+.lockbox h2{font-family:var(--font-title);font-weight:800;font-size:1.8rem;margin:0 0 6px;text-transform:lowercase}
+.lockbox h2::after{content:"";display:block;width:56px;height:6px;border-radius:6px;background:var(--accent);margin-top:8px}
+.lockbox p{color:var(--muted);font-size:.9rem;line-height:1.5}
+.lockbox input[type=password],.lockbox input[type=email]{width:100%;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:12px 14px;font:500 1rem var(--font-body);margin:10px 0}
+.lockbox label{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.85rem;margin-bottom:14px}
+.lockbox .go{width:100%;border:0;background:var(--accent);color:var(--on-accent);border-radius:12px;padding:12px;font:700 1rem var(--font-body);cursor:pointer}
+.lockbox .err{color:#c0392b;font-size:.85rem;min-height:1.2em;margin:0 0 8px}
+.lockbox textarea{width:100%;height:90px;border:1px solid var(--line);border-radius:10px;background:var(--soft);color:var(--ink);font:500 .75rem/1.4 monospace;padding:10px;margin:6px 0;resize:none}
+
+/* ===== Notas (to-do) ===== */
+.note{max-width:640px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px 24px}
+.note h2,.stk-head h2{font-family:var(--font-title);font-weight:800;font-size:1.5rem;margin:0 0 4px;color:var(--ink)}
+.note h2::after,.stk-head h2::after{content:"";display:block;width:56px;height:6px;border-radius:6px;background:var(--accent);margin-top:6px}
+.count{color:var(--muted);font-size:.85rem;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.chk{appearance:none;-webkit-appearance:none;flex:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--accent);margin:0;cursor:pointer;display:grid;place-items:center;background:transparent}
+.chk:checked{background:var(--accent)}
+.chk:checked::after{content:"";width:6px;height:11px;border:solid var(--on-accent);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.txt{flex:1;border:0;background:none;color:var(--ink);font:400 1.05rem var(--font-body);padding:2px 0;min-width:0}
+.txt::placeholder{color:var(--muted)}
+.row.done .txt{color:var(--muted);text-decoration:line-through}
+.del{border:0;background:none;color:var(--muted);font-size:1.1rem;cursor:pointer;opacity:0;padding:4px 8px}
+.row:hover .del,.del:focus-visible{opacity:1}
+@media (hover:none){.del{opacity:.7}}
+.sep{font-size:.8rem;color:var(--muted);margin:14px 0 2px;font-weight:700}
+
+/* ===== Kanban TCG ===== */
+.board{display:grid;grid-template-columns:repeat(5,minmax(230px,1fr));gap:14px;overflow-x:auto;padding-bottom:10px}
+.col{background:var(--soft);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:240px}
+.col.over{outline:2px dashed var(--accent)}
+.col h3{font-family:var(--font-title);font-weight:700;font-size:1rem;margin:2px 4px 4px;display:flex;justify-content:space-between;align-items:center}
+.col h3 span{background:var(--card);color:var(--muted);font:700 .75rem var(--font-body);border-radius:999px;padding:2px 9px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 10px 8px;cursor:grab}
+.card.dragging{opacity:.4}
+.card p{margin:0 0 8px;font-size:.95rem;line-height:1.35;word-break:break-word}
+.acts{display:flex;justify-content:space-between}
+.acts button{border:0;background:var(--soft);color:var(--ink);border-radius:8px;width:30px;height:26px;cursor:pointer;font-size:.85rem}
+.acts button:disabled{opacity:.25;cursor:default}
+.acts .x{background:none;color:var(--muted)}
+.add{display:flex;gap:6px;margin-top:auto}
+.add input{flex:1;min-width:0;border:1px dashed var(--accent-2);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 10px;font:400 .9rem var(--font-body)}
+.add button{border:0;background:var(--accent);color:var(--on-accent);border-radius:10px;width:36px;font-size:1.1rem;cursor:pointer}
+.col:nth-child(5){background:color-mix(in srgb,var(--accent-2) 22%,var(--card))}
+/* ===== Notas adesivas ===== */
+.stk{max-width:900px;margin:32px auto 0}
+.stk-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+#addNote{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-size:.85rem}
+.stk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.sticky{--c:#ffe58a;background:var(--c);color:#111;border-radius:6px;min-height:200px;display:flex;flex-direction:column;
+  box-shadow:0 2px 6px rgba(0,0,0,.14);transition:box-shadow .15s}
+.sticky:hover{box-shadow:0 6px 14px rgba(0,0,0,.2)}
+.sticky.dragging{opacity:.35}
+.sticky.over{outline:2px dashed #111}
+.sbar{display:flex;align-items:center;justify-content:space-between;padding:4px 6px;background:rgba(0,0,0,.07);border-radius:6px 6px 0 0;cursor:grab;min-height:30px}
+.sbar span{font-size:.9rem;letter-spacing:2px;opacity:.5;user-select:none}
+.sbar div{display:flex;gap:2px;opacity:0;transition:opacity .15s}
+.sticky:hover .sbar div,.sbar div:focus-within{opacity:1}
+@media (hover:none){.sbar div{opacity:.8}}
+.sbar button{border:0;background:none;cursor:pointer;font-size:.95rem;padding:2px 6px;border-radius:6px;color:#111}
+.sbar button:hover{background:rgba(0,0,0,.1)}
+.sticky textarea{flex:1;border:0;background:none;resize:none;padding:10px 12px 12px;font:500 .95rem/1.45 var(--font-body);color:#111;min-height:160px}
+.sticky textarea:focus{outline:none}
+.stk-empty{color:var(--muted);font-size:.9rem}
+@media (max-width:700px){.board{grid-template-columns:repeat(5,80%)}.wrap{padding-top:14px}}
+</style>
+</head>
+<body class="locked">
+<div id="lock"><div class="lockbox">
+  <h2 id="lockTitle">painel privado</h2>
+  <p id="lockText">entre com seu e-mail e senha.</p>
+  <form id="lockForm" autocomplete="on">
+    <input type="email" id="em" placeholder="e-mail" autocomplete="username" aria-label="E-mail" required>
+    <input type="password" id="pw" placeholder="senha" autocomplete="current-password" aria-label="Senha">
+    <label id="remWrap"><input type="checkbox" id="rem" checked> lembrar neste aparelho</label>
+    <div class="err" id="err" role="alert"></div>
+    <button class="go" id="go" type="submit">entrar</button>
+  </form>
+  <div id="setupOut" hidden>
+    <p>copie a linha abaixo e cole no <b>index.html</b>, no lugar de <code>const PASS_HASH='';</code>. depois salve e suba no GitHub.</p>
+    <textarea id="hashOut" readonly></textarea>
+  </div>
+</div></div>
+<div class="wrap">
+  <header>
+    <h1>Meu painel</h1>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="todo" aria-selected="true">to-do list ✨</button>
+      <button class="tab" role="tab" data-tab="tcg" aria-selected="false">@chinaritcg</button>
+    </div>
+    <div class="tools">
+      <button class="ghost" id="theme">Tema</button>
+      <button class="ghost" id="lockBtn">Bloquear</button>
+      <button class="ghost" id="export">Exportar</button>
+      <button class="ghost" id="import">Importar</button>
+      <input type="file" id="file" accept="application/json" hidden>
+    </div>
+  </header>
+
+  <main>
+    <section id="todo" class="note">
+      <h2>to-do list ✨</h2>
+      <div class="count" id="count"></div>
+      <div id="list"></div>
+    </section>
+    <section id="stickies" class="stk">
+      <div class="stk-head"><h2>anotações</h2>
+        <button class="ghost" id="addNote" aria-label="Nova nota">+ nova nota</button></div>
+      <div class="stk-grid" id="notes"></div>
+    </section>
+    <section id="tcg" hidden>
+      <div class="board" id="board"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+const COLS=['Ideias de conteúdo','Gravados','Editados','Prontos para agendar','Agendados / postados'];
+const KEY='painel-v1';
+let S={todos:[],cards:[],notes:[]};
+try{const r=localStorage.getItem(KEY);if(r)S=JSON.parse(r)}catch(e){}
+S.notes=S.notes||[];
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const uid=()=>Math.random().toString(36).slice(2,9);
+const $=s=>document.querySelector(s);
+const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---- Abas ---- */
+function tab(n){
+  document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===n));
+  $('#todo').hidden=n!=='todo';$('#stickies').hidden=n!=='todo';$('#tcg').hidden=n!=='tcg';
+  try{localStorage.setItem(KEY+'-tab',n)}catch(e){}
+}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
+try{tab(localStorage.getItem(KEY+'-tab')||'todo')}catch(e){}
+
+/* ---- To-do estilo Notas ---- */
+function rowHTML(t){
+  return `<div class="row ${t.d?'done':''}" data-id="${t.id}">
+    <input type="checkbox" class="chk" ${t.d?'checked':''} aria-label="Concluir">
+    <input class="txt" value="${esc(t.t)}" aria-label="Tarefa">
+    <button class="del" aria-label="Apagar">✕</button></div>`;
+}
+function renderTodos(){
+  const open=S.todos.filter(t=>!t.d),done=S.todos.filter(t=>t.d);
+  $('#count').textContent=open.length?`${open.length} pendente${open.length>1?'s':''}`:'';
+  $('#list').innerHTML=open.map(rowHTML).join('')+
+    `<div class="row"><span class="chk" style="opacity:.35"></span>
+     <input class="txt" id="new" placeholder="Nova tarefa" aria-label="Nova tarefa"></div>`+
+    (done.length?`<div class="sep">Concluídas (${done.length})</div>`+done.map(rowHTML).join(''):'');
+}
+$('#list').addEventListener('click',e=>{
+  const row=e.target.closest('.row[data-id]');if(!row)return;
+  const t=S.todos.find(x=>x.id===row.dataset.id);
+  if(e.target.classList.contains('chk')){t.d=!t.d;save();renderTodos()}
+  if(e.target.classList.contains('del')){S.todos=S.todos.filter(x=>x!==t);save();renderTodos()}
+});
+$('#list').addEventListener('change',e=>{
+  if(!e.target.classList.contains('txt')||e.target.id==='new')return;
+  const t=S.todos.find(x=>x.id===e.target.closest('.row').dataset.id);
+  const v=e.target.value.trim();
+  if(!v)S.todos=S.todos.filter(x=>x!==t);else t.t=v;
+  save();renderTodos();
+});
+$('#list').addEventListener('keydown',e=>{
+  if(e.key!=='Enter'||!e.target.classList.contains('txt'))return;
+  if(e.target.id==='new'){
+    const v=e.target.value.trim();if(!v)return;
+    S.todos.push({id:uid(),t:v,d:false});save();renderTodos();$('#new').focus();
+  }else e.target.blur();
+});
+
+/* ---- Kanban TCG ---- */
+function renderBoard(){
+  $('#board').innerHTML=COLS.map((name,i)=>{
+    const cs=S.cards.filter(c=>c.c===i);
+    return `<div class="col" data-col="${i}">
+      <h3>${name}<span>${cs.length}</span></h3>
+      ${cs.map(c=>`<div class="card" draggable="true" data-id="${c.id}">
+        <p>${esc(c.t)}</p>
+        <div class="acts">
+          <button data-mv="-1" ${i===0?'disabled':''} aria-label="Mover para trás">←</button>
+          <button class="x" data-del aria-label="Apagar">✕</button>
+          <button data-mv="1" ${i===COLS.length-1?'disabled':''} aria-label="Avançar">→</button>
+        </div></div>`).join('')}
+      <div class="add"><input placeholder="Adicionar..." aria-label="Novo card em ${name}"><button aria-label="Adicionar">+</button></div>
+    </div>`}).join('');
+}
+const board=$('#board');
+function addCard(col,input){
+  const v=input.value.trim();if(!v)return;
+  S.cards.push({id:uid(),t:v,c:+col.dataset.col});save();renderBoard();
+  document.querySelector(`.col[data-col="${col.dataset.col}"] input`).focus();
+}
+board.addEventListener('click',e=>{
+  const col=e.target.closest('.col');
+  if(e.target.closest('.add button'))return addCard(col,col.querySelector('input'));
+  const card=e.target.closest('.card');if(!card)return;
+  const c=S.cards.find(x=>x.id===card.dataset.id);
+  if(e.target.dataset.mv){c.c+=+e.target.dataset.mv;save();renderBoard()}
+  if(e.target.hasAttribute('data-del')){S.cards=S.cards.filter(x=>x!==c);save();renderBoard()}
+});
+board.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&e.target.matches('.add input'))addCard(e.target.closest('.col'),e.target);
+});
+let dragId=null;
+board.addEventListener('dragstart',e=>{const c=e.target.closest('.card');if(c){dragId=c.dataset.id;c.classList.add('dragging')}});
+board.addEventListener('dragend',()=>{dragId=null;renderBoard()});
+board.addEventListener('dragover',e=>{const c=e.target.closest('.col');if(c&&dragId){e.preventDefault();c.classList.add('over')}});
+board.addEventListener('dragleave',e=>{const c=e.target.closest('.col');if(c)c.classList.remove('over')});
+board.addEventListener('drop',e=>{
+  const c=e.target.closest('.col');if(!c||!dragId)return;
+  e.preventDefault();S.cards.find(x=>x.id===dragId).c=+c.dataset.col;save();renderBoard();
+});
+
+/* ---- Tema, backup ---- */
+$('#theme').onclick=()=>{
+  const dark=document.documentElement.dataset.theme==='dark'||
+    (!document.documentElement.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches);
+  const n=dark?'light':'dark';document.documentElement.dataset.theme=n;
+  try{localStorage.setItem(KEY+'-theme',n)}catch(e){}
+};
+try{const t=localStorage.getItem(KEY+'-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}
+$('#export').onclick=()=>{
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));
+  a.download='painel-backup.json';a.click();
+};
+$('#import').onclick=()=>$('#file').click();
+$('#file').onchange=async e=>{
+  try{const d=JSON.parse(await e.target.files[0].text());
+    if(Array.isArray(d.todos)&&Array.isArray(d.cards)){S=d;S.notes=S.notes||[];save();renderTodos();renderBoard();renderNotes()}
+    else alert('Arquivo inválido.');
+  }catch(err){alert('Não foi possível ler o arquivo.')}
+  e.target.value='';
+};
+
+/* ---- Notas adesivas ---- */
+const COLORS=['#ffe58a','#ffc9de','#c9e7ff','#d4f5c4','#e4d4ff','#ffd9b0'];
+function renderNotes(){
+  const g=$('#notes');
+  if(!S.notes.length){g.innerHTML='<div class="stk-empty">Nenhuma nota ainda. Clique em “+ nova nota”.</div>';return}
+  g.innerHTML=S.notes.map((n,i)=>`<div class="sticky" data-id="${n.id}" style="--c:${n.c}">
+    <div class="sbar"><span>⋮⋮</span><div>
+      <button data-mv="-1" aria-label="Mover para trás" ${i===0?'disabled':''}>‹</button>
+      <button data-mv="1" aria-label="Mover para frente" ${i===S.notes.length-1?'disabled':''}>›</button>
+      <button data-color aria-label="Mudar cor">🎨</button>
+      <button data-del aria-label="Apagar nota">🗑</button></div></div>
+    <textarea placeholder="Escreva aqui..." aria-label="Nota">${esc(n.t)}</textarea></div>`).join('');
+}
+$('#addNote').onclick=()=>{
+  S.notes.push({id:uid(),t:'',c:COLORS[S.notes.length%COLORS.length]});save();renderNotes();
+  const t=document.querySelectorAll('.sticky textarea');t[t.length-1].focus();
+};
+const ng=$('#notes');
+ng.addEventListener('input',e=>{
+  if(e.target.tagName!=='TEXTAREA')return;
+  S.notes.find(x=>x.id===e.target.closest('.sticky').dataset.id).t=e.target.value;save();
+});
+ng.addEventListener('click',e=>{
+  const el=e.target.closest('.sticky'),b=e.target.closest('button');if(!el||!b)return;
+  const i=S.notes.findIndex(x=>x.id===el.dataset.id),n=S.notes[i];
+  if(b.dataset.del!==undefined){
+    if(n.t.trim()&&!confirm('Apagar esta nota?'))return;
+    S.notes.splice(i,1);
+  }else if(b.dataset.color!==undefined){
+    n.c=COLORS[(COLORS.indexOf(n.c)+1)%COLORS.length];
+  }else if(b.dataset.mv){
+    const j=i+ +b.dataset.mv;if(j<0||j>=S.notes.length)return;
+    S.notes.splice(i,1);S.notes.splice(j,0,n);
+  }
+  save();renderNotes();
+});
+let nDrag=null;
+ng.addEventListener('mousedown',e=>{const b=e.target.closest('.sbar');if(b&&!e.target.closest('button'))b.closest('.sticky').draggable=true});
+ng.addEventListener('dragstart',e=>{const s=e.target.closest('.sticky');if(!s)return;nDrag=s.dataset.id;s.classList.add('dragging');e.dataTransfer.effectAllowed='move'});
+ng.addEventListener('dragend',()=>{nDrag=null;renderNotes()});
+ng.addEventListener('dragover',e=>{const s=e.target.closest('.sticky');if(s&&nDrag){e.preventDefault();s.classList.add('over')}});
+ng.addEventListener('dragleave',e=>{const s=e.target.closest('.sticky');if(s)s.classList.remove('over')});
+ng.addEventListener('drop',e=>{
+  const s=e.target.closest('.sticky');if(!s||!nDrag||s.dataset.id===nDrag)return;
+  e.preventDefault();
+  const from=S.notes.findIndex(x=>x.id===nDrag),n=S.notes.splice(from,1)[0];
+  S.notes.splice(S.notes.findIndex(x=>x.id===s.dataset.id),0,n);save();
+});
+
+renderTodos();renderBoard();renderNotes();
+
+/* ---- Senha ---- */
+/* Cole aqui o código gerado na tela “criar senha” */
+const PASS_HASH='';
+const SALT='chinaritcg-painel-v1',UK=KEY+'-auth';
+async function derive(p){
+  const enc=new TextEncoder();
+  const k=await crypto.subtle.importKey('raw',enc.encode(p),'PBKDF2',false,['deriveBits']);
+  const b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode(SALT),iterations:200000,hash:'SHA-256'},k,256);
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+function openApp(){document.body.classList.remove('locked');$('#lock').hidden=true}
+(function gate(){
+  try{const v=localStorage.getItem(UK)||sessionStorage.getItem(UK);if(PASS_HASH&&v===PASS_HASH)return openApp()}catch(e){}
+  const setup=!PASS_HASH;
+  if(setup){
+    $('#lockTitle').textContent='criar senha';
+    $('#lockText').textContent='informe o e-mail e a senha que você vai usar. vou gerar um código para colar no arquivo. isso é feito uma única vez.';
+    $('#pw').autocomplete='new-password';
+    $('#remWrap').hidden=true;$('#go').textContent='gerar código';
+  }
+  $('#lockForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const em=$('#em').value.trim().toLowerCase(),pw=$('#pw').value;if(!em||!pw)return;
+    const p=em+'\n'+pw;
+    if(!window.crypto||!crypto.subtle){$('#err').textContent='Abra pelo endereço https:// para fazer login.';return}
+    $('#go').disabled=true;
+    const h=await derive(p);
+    $('#go').disabled=false;
+    if(setup){
+      $('#hashOut').value="const PASS_HASH='"+h+"';";
+      $('#setupOut').hidden=false;return;
+    }
+    if(h===PASS_HASH){
+      try{(($('#rem').checked)?localStorage:sessionStorage).setItem(UK,h)}catch(e){}
+      openApp();
+    }else{$('#err').textContent='E-mail ou senha incorretos.';$('#pw').select()}
+  });
+})();
+$('#lockBtn').onclick=()=>{try{localStorage.removeItem(UK);sessionStorage.removeItem(UK)}catch(e){}location.reload()};
+</script>
+</body>
+</html>
